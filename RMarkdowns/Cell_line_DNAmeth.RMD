@@ -1,0 +1,84 @@
+---
+title: "HL60 & MOLM14 impact of IDHmutations and inhibition, DNA methylation analysis"
+author: Alexis Hucteau
+date: "`r Sys.Date()`"
+output:
+    html_document:
+      toc: yes
+      toc_float: yes
+      theme: united
+editor_options:
+  markdown:
+    wrap: sentence
+---
+
+
+
+```{r}
+BMIQ_Lucille <- readRDS("/media/alexis/DATA/BMIQ_Lucille.rds")
+Pheno_Lucille <- readRDS("/media/alexis/DATA/Phenotype_Lucille.Rds")
+
+Pheno_Lucille$Treatment <- ifelse(stringr::str_detect(Pheno_Lucille$Cell_line, "120"), "mIDHi", "None")
+Pheno_Lucille$Cell_line <- ifelse(stringr::str_detect(Pheno_Lucille$Cell_line, "MOLM"), "Molm14", "HL60")
+```
+
+```{r}
+suppressPackageStartupMessages({
+  library(dplyr)
+  library(limma)
+  library(FactoMineR)
+  library(factoextra)
+  library(sva)
+  library(gridExtra)
+  library(grid)
+})
+```
+
+```{r}
+pca_DNA_meth <- prcomp(t(BMIQ_Lucille))
+
+pca_all <- fviz_pca_ind(pca_DNA_meth, label="none", habillage=paste(Pheno_Lucille$Cell_line, Pheno_Lucille$Sample_Group, Pheno_Lucille$Treatment),
+             addEllipses=TRUE, ellipse.level=0.95, title = "Combined cell lines DNA meth pca", 
+             pointsize = 2)
+print(pca_all)
+png(file = paste0("../Figures/", p$labels$title,".png"))
+print(pca_all)
+dev.off()
+```
+
+```{r}
+pca_DNA_meth_M14 <- prcomp(t(BMIQ_Lucille[,4:7]))
+
+pca_Molm <- fviz_pca_ind(pca_DNA_meth_M14, label="none", habillage=paste(Pheno_Lucille$Sample_Group, Pheno_Lucille$Treatment)[4:7],
+             addEllipses=TRUE, ellipse.level=0.95, title = "Molm14 DNA meth pca", 
+             pointsize = 2)
+print(pca_Molm)
+png(file = paste0("../Figures/", p$labels$title,".png"))
+print(pca_Molm)
+dev.off()
+```
+
+```{r}
+pca_DNA_meth_HL60 <- prcomp(t(BMIQ_Lucille[,1:3]))
+
+pca_HL60 <- fviz_pca_ind(pca_DNA_meth_HL60, label="none", habillage=paste(Pheno_Lucille$Sample_Group, Pheno_Lucille$Treatment)[1:3],
+             addEllipses=TRUE, 
+             ellipse.level=0.95, 
+             title = "HL60 DNA meth pca", 
+             pointsize = 2)
+print(pca_HL60)
+png(file = paste0("../Figures/", p$labels$title,".png"))
+print(pca_HL60)
+dev.off()
+```
+
+```{r}
+png(file = "../Figures/cell_lines_pca.png", width = 1920, height = 1080)
+grid.arrange(pca_Molm, pca_HL60,
+             ncol=2,
+             top = textGrob('PCA of cell lines',
+                            just = c('center'),
+                            gp = gpar(fontsize = 32)))
+dev.off()
+```
+
