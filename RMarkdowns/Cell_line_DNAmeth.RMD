@@ -31,6 +31,7 @@ suppressPackageStartupMessages({
   library(sva)
   library(gridExtra)
   library(grid)
+  library(ChAMP)
 })
 ```
 
@@ -41,9 +42,7 @@ pca_all <- fviz_pca_ind(pca_DNA_meth, label="none", habillage=paste(Pheno_Lucill
              addEllipses=TRUE, ellipse.level=0.95, title = "Combined cell lines DNA meth pca", 
              pointsize = 2)
 print(pca_all)
-png(file = paste0("../Figures/", p$labels$title,".png"))
-print(pca_all)
-dev.off()
+
 ```
 
 ```{r}
@@ -53,10 +52,10 @@ pca_Molm <- fviz_pca_ind(pca_DNA_meth_M14, label="none", habillage=paste(Pheno_L
              addEllipses=TRUE, ellipse.level=0.95, title = "Molm14 DNA meth pca", 
              pointsize = 2)
 print(pca_Molm)
-png(file = paste0("../Figures/", p$labels$title,".png"))
-print(pca_Molm)
-dev.off()
 ```
+
+
+
 
 ```{r}
 pca_DNA_meth_HL60 <- prcomp(t(BMIQ_Lucille[,1:3]))
@@ -67,12 +66,18 @@ pca_HL60 <- fviz_pca_ind(pca_DNA_meth_HL60, label="none", habillage=paste(Pheno_
              title = "HL60 DNA meth pca", 
              pointsize = 2)
 print(pca_HL60)
-png(file = paste0("../Figures/", p$labels$title,".png"))
-print(pca_HL60)
-dev.off()
+
 ```
 
 ```{r}
+grid.arrange(pca_Molm, pca_HL60,
+             ncol=2,
+             top = textGrob('PCA of cell lines',
+                            just = c('center'),
+                            gp = gpar(fontsize = 32)))
+```
+
+```{r eval=FALSE, include=FALSE}
 png(file = "../Figures/cell_lines_pca.png", width = 1920, height = 1080)
 grid.arrange(pca_Molm, pca_HL60,
              ncol=2,
@@ -80,5 +85,49 @@ grid.arrange(pca_Molm, pca_HL60,
                             just = c('center'),
                             gp = gpar(fontsize = 32)))
 dev.off()
+png(file = paste0("../Figures/", p$labels$title,".png"))
+print(pca_HL60)
+dev.off()
+png(file = paste0("../Figures/", p$labels$title,".png"))
+print(pca_Molm)
+dev.off()
+png(file = paste0("../Figures/", p$labels$title,".png"))
+print(pca_all)
+dev.off()
 ```
+
+```{r}
+```
+
+
+
+```{r}
+DMR_analyses <- function(beta_df, phenotype, arraytype_f = "EPIC", method_f = "Bumphunter", cores_f = 8, adjPval_f = 0.05, method_f2 = "gometh", method_f3 = "fisher", DMR = NA, block = NA, eGSEA = NA, fGSEA = NA, gGSEA = NA) {
+  list_result <- list()
+  print("champ.DMR in progress...")
+  if (is.na(DMR)) {
+    list_result[["DMR"]] <- champ.DMR(beta = beta_df, pheno = phenotype, arraytype = arraytype_f, method = method_f, cores = cores_f)
+  } else {
+    list_result[["DMR"]] <- DMR
+  }
+  print("champ.DMR finished! champ.ebGSEA in progress...")
+  print("finished!")
+  system("say finished!")
+  return(list_result)
+}
+```
+
+```{r}
+Pheno<- factor(paste(Pheno_Lucille$Cell_line, Pheno_Lucille$Sample_Group, Pheno_Lucille$Treatment, sep = "."))
+Pheno
+
+DMR_HL60_M_vs_WT_analyses <- DMR_analyses(BMIQ_Lucille[,c(1,3)], Pheno[c(1,3)], cores_f = 8)
+DMR_HL60_Treated_vs_non_treated_analyses <- DMR_analyses(BMIQ_Lucille[,1:2], Pheno[1:2], cores_f = 8)
+
+DMR_Molm14_M_vs_WT_analyses <- DMR_analyses(BMIQ_Lucille[,c(4,6,7)], Pheno[c(4,6,7)], cores_f = 8)
+DMR_Molm14_Treated_vs_non_treated_analyses <- DMR_analyses(BMIQ_Lucille[,4:6], Pheno[4:6], cores_f = 8)
+
+```
+
+
 
